@@ -8,9 +8,9 @@ const app = express();
 
 // ✅ Middleware
 app.use(cors());
-app.use(express.json({ limit: "20mb" })); // ⬅️ increased limit (important)
+app.use(express.json({ limit: "20mb" }));
 
-// 🔐 Cloudinary config using .env
+// 🔐 Cloudinary config
 cloudinary.config({
 cloud_name: process.env.CLOUD_NAME,
 api_key: process.env.API_KEY,
@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
 res.send("Backend is running 🚀");
 });
 
-// ✅ UPLOAD ROUTE (FIXED)
+// ✅ UPLOAD ROUTE (FINAL FIX)
 app.post("/upload", async (req, res) => {
 try {
 console.log("📥 Incoming request...");
@@ -30,16 +30,23 @@ console.log("📥 Incoming request...");
 ```
 const file = req.body?.file;
 
-// ❗ Safety check
+// ❗ Check if file exists
 if (!file) {
   console.log("❌ No file received");
   return res.status(400).json({ error: "No file received" });
+}
+
+// ❗ Validate format
+if (!file.startsWith("data:image")) {
+  console.log("❌ Invalid image format");
+  return res.status(400).json({ error: "Invalid image format" });
 }
 
 console.log("📤 Uploading to Cloudinary...");
 
 const result = await cloudinary.uploader.upload(file, {
   folder: "reports",
+  resource_type: "image", // 🔥 IMPORTANT FIX
 });
 
 console.log("✅ Upload success:", result.secure_url);
@@ -53,7 +60,7 @@ res.status(500).json({ error: err.message });
 }
 });
 
-// ✅ PORT FIX (important for deployment)
+// ✅ PORT
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
