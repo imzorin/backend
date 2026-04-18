@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
 res.send("Backend is running 🚀");
 });
 
-// ✅ UPLOAD ROUTE (FINAL FIX)
+// ✅ FINAL UPLOAD ROUTE (STABLE)
 app.post("/upload", async (req, res) => {
 try {
 console.log("📥 Incoming request...");
@@ -30,13 +30,12 @@ console.log("📥 Incoming request...");
 ```
 const file = req.body?.file;
 
-// ❗ Check if file exists
+// ❗ Validate input
 if (!file) {
   console.log("❌ No file received");
   return res.status(400).json({ error: "No file received" });
 }
 
-// ❗ Validate format
 if (!file.startsWith("data:image")) {
   console.log("❌ Invalid image format");
   return res.status(400).json({ error: "Invalid image format" });
@@ -44,23 +43,28 @@ if (!file.startsWith("data:image")) {
 
 console.log("📤 Uploading to Cloudinary...");
 
+// 🔥 FINAL FIX HERE
 const result = await cloudinary.uploader.upload(file, {
   folder: "reports",
-  resource_type: "image", // 🔥 IMPORTANT FIX
+  resource_type: "auto", // 💥 KEY FIX
+  use_filename: true,
+  unique_filename: true,
 });
 
 console.log("✅ Upload success:", result.secure_url);
 
-res.json({ url: result.secure_url });
+return res.json({ url: result.secure_url });
 ```
 
 } catch (err) {
 console.error("❌ Upload error:", err);
-res.status(500).json({ error: err.message });
+return res.status(500).json({
+error: err.message || "Upload failed",
+});
 }
 });
 
-// ✅ PORT
+// ✅ PORT (Render compatible)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
